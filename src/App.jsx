@@ -137,21 +137,45 @@ function App() {
   };
 
   // 處理存款
-  const handleDeposit = () => {
+  const handleDeposit = async () => {
     if (depositAmount <= 0) {
       setErrorMessage('請輸入有效金額');
       return;
     }
 
-    // 更新餘額
-    setBalance(prevBalance => prevBalance + Number(depositAmount));
-    setSuccessMessage(`存款成功！金額: ${depositAmount}`);
-    setDepositAmount(0);
-    // 這裡應該調用API將更新後的餘額存入數據庫
+    try {
+      // 調用 API 更新餘額
+      const response = await fetch('http://localhost:8585/wallet/updateTransferMoney', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          account: username,
+          transfer: Number(depositAmount) // 存款為正數，增加餘額
+        }),
+        credentials: 'include' // 包含 cookies 以維持 session
+      });
+
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        // 存款成功，更新本地餘額
+        setBalance(prevBalance => prevBalance + Number(depositAmount));
+        setSuccessMessage(`存款成功！金額: ${depositAmount}`);
+        setDepositAmount(0);
+      } else {
+        // 存款失敗
+        setErrorMessage(data.message || '存款失敗，請稍後再試');
+      }
+    } catch (error) {
+      console.error("存款時發生錯誤:", error);
+      setErrorMessage('連接伺服器時發生錯誤，請稍後再試');
+    }
   };
 
   // 處理提款
-  const handleWithdraw = () => {
+  const handleWithdraw = async () => {
     if (withdrawAmount <= 0) {
       setErrorMessage('請輸入有效金額');
       return;
@@ -162,15 +186,39 @@ function App() {
       return;
     }
 
-    // 更新餘額
-    setBalance(prevBalance => prevBalance - Number(withdrawAmount));
-    setSuccessMessage(`提款成功！金額: ${withdrawAmount}`);
-    setWithdrawAmount(0);
-    // 這裡應該調用API將更新後的餘額存入數據庫
+    try {
+      // 調用 API 更新餘額
+      const response = await fetch('http://localhost:8585/wallet/updateTransferMoney', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          account: username,
+          transfer: -Number(withdrawAmount) // 提款為負數，減少餘額
+        }),
+        credentials: 'include' // 包含 cookies 以維持 session
+      });
+
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        // 提款成功，更新本地餘額
+        setBalance(prevBalance => prevBalance - Number(withdrawAmount));
+        setSuccessMessage(`提款成功！金額: ${withdrawAmount}`);
+        setWithdrawAmount(0);
+      } else {
+        // 提款失敗
+        setErrorMessage(data.message || '提款失敗，請稍後再試');
+      }
+    } catch (error) {
+      console.error("提款時發生錯誤:", error);
+      setErrorMessage('連接伺服器時發生錯誤，請稍後再試');
+    }
   };
 
   // 處理轉帳
-  const handleTransfer = () => {
+  const handleTransfer = async () => {
     if (transferAmount <= 0) {
       setErrorMessage('請輸入有效金額');
       return;
@@ -186,33 +234,59 @@ function App() {
       return;
     }
 
-    // 更新餘額
-    setBalance(prevBalance => prevBalance - Number(transferAmount));
-
-    // 組合門牌和備註信息
-    let combinedNote = "";
-    if (doorNumber) {
-      combinedNote = `${transferAccount}#${doorNumber}`;
-      if (transferNote) {
-        combinedNote += `#${transferNote}`;
+    try {
+      // 組合門牌和備註信息
+      let combinedNote = "";
+      if (doorNumber) {
+        combinedNote = `${transferAccount}#${doorNumber}`;
+        if (transferNote) {
+          combinedNote += `#${transferNote}`;
+        }
+      } else if (transferNote) {
+        combinedNote = transferNote;
       }
-    } else if (transferNote) {
-      combinedNote = transferNote;
+
+      // 調用 API 更新餘額
+      const response = await fetch('http://localhost:8585/wallet/updateTransferMoney', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          account: username,
+          transfer: -Number(transferAmount), // 轉帳為負數，減少餘額
+          targetAccount: transferAccount,
+          note: combinedNote
+        }),
+        credentials: 'include' // 包含 cookies 以維持 session
+      });
+
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        // 轉帳成功，更新本地餘額
+        setBalance(prevBalance => prevBalance - Number(transferAmount));
+        
+        // 顯示備註信息
+        const displayNote = doorNumber ? 
+          `（門牌：${doorNumber}${transferNote ? `，備註：${transferNote}` : ''}）` : 
+          (transferNote ? `（備註：${transferNote}）` : '');
+        
+        setSuccessMessage(`成功轉帳 ${transferAmount} 給帳號 ${transferAccount} ${displayNote}`);
+        console.log(`送出的完整資訊: ${combinedNote}`);
+
+        setTransferAmount(0);
+        setTransferAccount('');
+        setTransferNote('');
+        setDoorNumber('');
+      } else {
+        // 轉帳失敗
+        setErrorMessage(data.message || '轉帳失敗，請稍後再試');
+      }
+    } catch (error) {
+      console.error("轉帳時發生錯誤:", error);
+      setErrorMessage('連接伺服器時發生錯誤，請稍後再試');
     }
-
-    // 顯示備註信息
-    const displayNote = doorNumber ? 
-      `（門牌：${doorNumber}${transferNote ? `，備註：${transferNote}` : ''}）` : 
-      (transferNote ? `（備註：${transferNote}）` : '');
-    
-    setSuccessMessage(`成功轉帳 ${transferAmount} 給帳號 ${transferAccount} ${displayNote}`);
-    console.log(`送出的完整資訊: ${combinedNote}`);
-
-    setTransferAmount(0);
-    setTransferAccount('');
-    setTransferNote('');
-    setDoorNumber('');
-    // 這裡應該調用API將更新後的餘額存入數據庫，並處理轉帳邏輯
   };
 
   // 處理選擇預設備註
