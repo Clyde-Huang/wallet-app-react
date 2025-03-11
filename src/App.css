@@ -20,6 +20,66 @@
   overflow: hidden;
 }
 
+/* 流星效果 */
+.shooting-star {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background-color: white;
+  border-radius: 50%;
+  box-shadow: 0 0 10px 2px rgba(255, 255, 255, 0.7),
+    0 0 20px 5px rgba(255, 255, 255, 0.5),
+    0 0 30px 10px rgba(255, 255, 255, 0.3);
+  animation: shooting 3s linear infinite;
+  opacity: 0;
+}
+
+.shooting-star:nth-child(1) {
+  top: 10%;
+  left: 0;
+  animation-delay: 0s;
+}
+
+.shooting-star:nth-child(2) {
+  top: 20%;
+  left: 0;
+  animation-delay: 1.5s;
+}
+
+.shooting-star:nth-child(3) {
+  top: 30%;
+  left: 0;
+  animation-delay: 3s;
+}
+
+.shooting-star:nth-child(4) {
+  top: 40%;
+  left: 0;
+  animation-delay: 4.5s;
+}
+
+.shooting-star:nth-child(5) {
+  top: 50%;
+  left: 0;
+  animation-delay: 6s;
+}
+
+@keyframes shooting {
+  0% {
+    transform: translateX(0) translateY(0) rotate(-45deg);
+    opacity: 1;
+  }
+
+  70% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateX(100vw) translateY(100vh) rotate(-45deg);
+    opacity: 0;
+  }
+}
+
 h1,
 h2,
 h3 {
@@ -33,6 +93,17 @@ h1 {
   font-size: 2.6rem;
   letter-spacing: 1px;
   margin-bottom: 35px;
+  animation: glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+  from {
+    text-shadow: 2px 2px 0 #2b579a;
+  }
+
+  to {
+    text-shadow: 2px 2px 0 #2b579a, 0 0 20px rgba(255, 222, 89, 0.7);
+  }
 }
 
 h2 {
@@ -65,6 +136,21 @@ h2 {
   position: relative;
   z-index: 1;
   border: 4px solid #2b579a;
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
 }
 
 .user-info {
@@ -90,7 +176,7 @@ h2 {
 }
 
 .avatar-container:hover {
-  animation: bounce 1s;
+  animation: advanced-bounce 1.5s ease-in-out;
 }
 
 .user-avatar {
@@ -150,6 +236,23 @@ button {
   font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
   position: relative;
   z-index: 1;
+  overflow: hidden;
+}
+
+button:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: all 0.5s;
+  z-index: -1;
+}
+
+button:hover:before {
+  left: 100%;
 }
 
 button:hover {
@@ -204,6 +307,12 @@ button:active {
   box-shadow: 0 6px 0 #e8b629, 0 10px 20px rgba(0, 0, 0, 0.1);
   border: 3px dashed #2b579a;
   position: relative;
+  transition: all 0.3s ease;
+}
+
+.balance-container:hover {
+  transform: scale(1.03);
+  box-shadow: 0 8px 0 #e8b629, 0 15px 25px rgba(0, 0, 0, 0.15);
 }
 
 .balance-container h3 {
@@ -230,6 +339,12 @@ button:active {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   padding: 25px;
   margin-bottom: 5px;
+  transition: all 0.3s ease;
+}
+
+.function-block:hover {
+
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
 }
 
 .function-button {
@@ -248,6 +363,13 @@ button:active {
   box-shadow: 0 6px 0 #528020;
 }
 
+.refresh-button {
+  background-color: #4a86e8;
+  font-size: 16px;
+  padding: 10px 15px;
+  margin-top: 10px;
+}
+
 .error-message {
   color: #ff5c5c;
   font-weight: bold;
@@ -258,6 +380,30 @@ button:active {
   background-color: #ffe0e0;
   border-radius: 10px;
   border: 2px dashed #ff5c5c;
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translateX(-5px);
+  }
+
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translateX(5px);
+  }
 }
 
 .success-message {
@@ -270,6 +416,21 @@ button:active {
   background-color: #e6f7e6;
   border-radius: 10px;
   border: 2px dashed #51cf66;
+  animation: pulse 1s ease-in-out;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.95);
+  }
+
+  50% {
+    transform: scale(1.05);
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }
 
 .hint {
@@ -299,7 +460,7 @@ button:active {
   background-color: #2b579a;
 }
 
-@keyframes bounce {
+/* @keyframes bounce {
 
   0%,
   20%,
@@ -316,8 +477,219 @@ button:active {
   60% {
     transform: translateY(-7px);
   }
+} */
+
+
+@keyframes advanced-bounce {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+
+  15% {
+    transform: translateY(-20px) scale(1.05);
+  }
+
+  25% {
+    transform: translateY(-10px) scale(1.03);
+  }
+
+  35% {
+    transform: translateY(-25px) scale(1.07);
+  }
+
+  45% {
+    transform: translateY(-5px) scale(1.02);
+  }
+
+  55% {
+    transform: translateY(-15px) scale(1.04);
+  }
+
+  70% {
+    transform: translateY(-8px) scale(1.02);
+  }
+
+  80% {
+    transform: translateY(-4px) scale(1.01);
+  }
+
+  90% {
+    transform: translateY(-2px) scale(1);
+  }
+
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* 增加頭像轉場效果 */
+.user-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.2);
+  transition: transform 0.3s ease;
+}
+
+.avatar-container:hover .user-avatar {
+  transform: scale(1.3) rotate(5deg);
 }
 
 .logout-button:hover {
   animation: bounce 1s;
+}
+
+/* 彈窗警告/成功訊息 */
+.alert-message {
+  position: fixed;
+  top: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(255, 255, 255, 0.95);
+  color: #2b579a;
+  padding: 15px 30px;
+  border-radius: 10px;
+  border: 3px solid #4a86e8;
+  font-weight: bold;
+  z-index: 100;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  animation: slideDown 0.5s forwards, fadeOut 0.5s 2.5s forwards;
+  min-width: 250px;
+  text-align: center;
+  font-size: 18px;
+}
+
+@keyframes slideDown {
+  0% {
+    top: -50px;
+    opacity: 0;
+  }
+
+  100% {
+    top: 50px;
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  0% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+/* 交易動畫效果 */
+.transaction-animation {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  pointer-events: none;
+}
+
+.money-animation {
+  display: flex;
+  gap: 15px;
+  font-size: 4rem;
+}
+
+.money-icon {
+  animation: flyIcon 2s forwards;
+  opacity: 0;
+}
+
+.money-icon:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.money-icon:nth-child(2) {
+  animation-delay: 0.3s;
+}
+
+.money-icon:nth-child(3) {
+  animation-delay: 0.6s;
+}
+
+.money-in .money-icon {
+  animation-name: flyIconIn;
+}
+
+.money-out .money-icon {
+  animation-name: flyIconOut;
+}
+
+.money-transfer .money-icon {
+  animation-name: flyIconTransfer;
+}
+
+@keyframes flyIconIn {
+  0% {
+    transform: translateY(-100px) scale(0.5);
+    opacity: 0;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(100px) scale(1.5);
+    opacity: 0;
+  }
+}
+
+@keyframes flyIconOut {
+  0% {
+    transform: translateY(0) scale(1.5);
+    opacity: 0;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(-200px) scale(0.5);
+    opacity: 0;
+  }
+}
+
+@keyframes flyIconTransfer {
+  0% {
+    transform: translateX(-200px) scale(0.8);
+    opacity: 0;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateX(200px) scale(0.8);
+    opacity: 0;
+  }
+}
+
+/* 新增燦爛光芒效果按鈕 */
+.glowing-button {
+  animation: glowing 1.5s infinite alternate;
+  background-color: #ff5252;
+}
+
+@keyframes glowing {
+  0% {
+    box-shadow: 0 4px 0 #c73e3e, 0 0 5px rgba(255, 82, 82, 0.5);
+  }
+
+  100% {
+    box-shadow: 0 4px 0 #c73e3e, 0 0 20px rgba(255, 82, 82, 0.8);
+  }
 }

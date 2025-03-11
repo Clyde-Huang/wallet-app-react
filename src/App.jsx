@@ -4,6 +4,7 @@ import './App.css';
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
+  const [displayName, setDisplayName] = useState(''); // 新增顯示名稱狀態
   const [password, setPassword] = useState('');
   const [captcha, setCaptcha] = useState('');
   const [userCaptcha, setUserCaptcha] = useState('');
@@ -18,6 +19,10 @@ function App() {
   const [successMessage, setSuccessMessage] = useState('');
   const [isFirstLogin, setIsFirstLogin] = useState(false);
   const [avatar, setAvatar] = useState(null);
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
+  const [showAnimation, setShowAnimation] = useState(false); // 新增動畫狀態
+  const [animationType, setAnimationType] = useState(''); // 新增動畫類型
 
   // 生成驗證碼
   const generateCaptcha = () => {
@@ -31,7 +36,7 @@ function App() {
   // 從 PokeAPI 獲取隨機頭像
   const fetchRandomAvatar = async () => {
     try {
-      // 生成隨機 Pokemon ID (1-151 是第一代寶可夢)
+      // 生成隨機 Pokemon ID (1-1025)
       const randomId = Math.floor(Math.random() * 1025) + 1;
       const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${randomId}`);
       const data = await response.json();
@@ -44,6 +49,81 @@ function App() {
     }
   };
 
+  // 顯示提示訊息
+  const showAlertMessage = (message) => {
+    setAlertMessage(message);
+    setShowAlert(true);
+    setTimeout(() => {
+      setShowAlert(false);
+    }, 3000);
+  };
+
+  // 顯示動畫效果
+  const showAnimationEffect = (type) => {
+    setAnimationType(type);
+    setShowAnimation(true);
+    setTimeout(() => {
+      setShowAnimation(false);
+    }, 2000);
+  };
+
+  // 獲取用戶餘額 - 修正後的函數
+  const fetchBalance = async (account) => {
+    try {
+      console.log("正在獲取餘額，帳號:", account);
+      const response = await fetch(`http://localhost:8585/wallet/balance?account=${account}`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log("獲取餘額回應:", data);
+
+        if (data.success) {
+          console.log("設置餘額為:", data.balance);
+          setBalance(Number(data.balance));
+        } else {
+          console.error("獲取餘額失敗:", data.message);
+        }
+      } else {
+        console.error("獲取餘額請求失敗:", response.status);
+      }
+    } catch (error) {
+      console.error("獲取餘額時發生錯誤:", error);
+    }
+  };
+
+  // 獲取用戶資料
+  const fetchUserInfo = async (identityNumber) => {
+    try {
+      const response = await fetch(`http://localhost:8585/wallet/user-info?identityNumber=${identityNumber}`, {
+        method: 'GET',
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.name) {
+          setDisplayName(data.name);
+        } else {
+          // 如果無法獲取名稱，使用身分證號作為備用
+          setDisplayName(identityNumber);
+        }
+      } else {
+        // 無法獲取資料時使用身分證號
+        setDisplayName(identityNumber);
+      }
+    } catch (error) {
+      console.error("獲取用戶資料時發生錯誤:", error);
+      setDisplayName(identityNumber);
+    }
+  };
+
   // 檢查用戶登入狀態
   const checkSession = async () => {
     try {
@@ -51,20 +131,27 @@ function App() {
         method: 'GET',
         credentials: 'include'
       });
-      
+
       if (response.ok) {
         const data = await response.json();
-        
+
         if (data.isLoggedIn) {
           // 用戶已登入，設置相關狀態
           setIsLoggedIn(true);
           setUsername(data.identityNumber || '');
-          
+
+          // 獲取用戶名稱
+          if (data.identityNumber) {
+            fetchUserInfo(data.identityNumber);
+          }
+
           // 獲取隨機頭像
           fetchRandomAvatar();
-          
-          // 模擬從後端獲取餘額
-          setBalance(Math.floor(Math.random() * 90000) + 10000);
+
+          // 從後端獲取實際餘額
+          if (data.identityNumber) {
+            fetchBalance(data.identityNumber);
+          }
         }
       }
     } catch (error) {
@@ -105,24 +192,19 @@ function App() {
       });
 
       const data = await response.json();
-      
+
       if (response.ok && data.success) {
         // 登入成功
         fetchRandomAvatar();
-        
-        // 模擬從後端獲取餘額
-        const initialBalance = Math.floor(Math.random() * 90000) + 10000;
-        setBalance(initialBalance);
-        
-        // 模擬檢查是否為首次登入
-        const simulateFirstLogin = Math.random() > 0.5;
-        if (simulateFirstLogin) {
-          setIsFirstLogin(true);
-          setSuccessMessage(`首次登入成功！已為您初始化餘額: ${initialBalance}`);
-        } else {
-          setSuccessMessage(data.message || '登入成功！');
-        }
-        
+
+        // 獲取用戶名稱
+        fetchUserInfo(username);
+
+        // 獲取實際餘額
+        fetchBalance(username);
+
+        setSuccessMessage(data.message || '登入成功！');
+        showAlertMessage('登入成功！');
         setIsLoggedIn(true);
       } else {
         // 登入失敗
@@ -144,25 +226,30 @@ function App() {
     }
 
     try {
-      // 調用 API 更新餘額
-      const response = await fetch('http://localhost:8585/wallet/updateTransferMoney', {
+      // 使用正確的存款 API
+      const response = await fetch('http://localhost:8585/wallet/deposit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           account: username,
-          transfer: Number(depositAmount) // 存款為正數，增加餘額
+          transfer: Number(depositAmount) // 存款金額
         }),
         credentials: 'include' // 包含 cookies 以維持 session
       });
 
       const data = await response.json();
-      
+
       if (response.ok && data.success) {
-        // 存款成功，更新本地餘額
-        setBalance(prevBalance => prevBalance + Number(depositAmount));
-        setSuccessMessage(`存款成功！金額: ${depositAmount}`);
+        // 存款成功
+        const successMsg = `存款成功！金額: ${depositAmount}`;
+        setSuccessMessage(successMsg);
+        showAlertMessage(successMsg);
+        showAnimationEffect('deposit'); // 顯示存款動畫
+
+        // 獲取更新後的餘額
+        await fetchBalance(username);
         setDepositAmount(0);
       } else {
         // 存款失敗
@@ -187,25 +274,30 @@ function App() {
     }
 
     try {
-      // 調用 API 更新餘額
-      const response = await fetch('http://localhost:8585/wallet/updateTransferMoney', {
+      // 使用正確的提款 API
+      const response = await fetch('http://localhost:8585/wallet/withdraw', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           account: username,
-          transfer: -Number(withdrawAmount) // 提款為負數，減少餘額
+          transfer: Number(withdrawAmount) // 提款金額
         }),
         credentials: 'include' // 包含 cookies 以維持 session
       });
 
       const data = await response.json();
-      
+
       if (response.ok && data.success) {
-        // 提款成功，更新本地餘額
-        setBalance(prevBalance => prevBalance - Number(withdrawAmount));
-        setSuccessMessage(`提款成功！金額: ${withdrawAmount}`);
+        // 提款成功
+        const successMsg = `提款成功！金額: ${withdrawAmount}`;
+        setSuccessMessage(successMsg);
+        showAlertMessage(successMsg);
+        showAnimationEffect('withdraw'); // 顯示提款動畫
+
+        // 獲取更新後的餘額
+        await fetchBalance(username);
         setWithdrawAmount(0);
       } else {
         // 提款失敗
@@ -246,15 +338,15 @@ function App() {
         combinedNote = transferNote;
       }
 
-      // 調用 API 更新餘額
-      const response = await fetch('http://localhost:8585/wallet/updateTransferMoney', {
+      // 使用正確的轉帳 API
+      const response = await fetch('http://localhost:8585/wallet/transfer', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           account: username,
-          transfer: -Number(transferAmount), // 轉帳為負數，減少餘額
+          transfer: Number(transferAmount), // 轉帳金額
           targetAccount: transferAccount,
           note: combinedNote
         }),
@@ -262,18 +354,22 @@ function App() {
       });
 
       const data = await response.json();
-      
+
       if (response.ok && data.success) {
-        // 轉帳成功，更新本地餘額
-        setBalance(prevBalance => prevBalance - Number(transferAmount));
-        
+        // 轉帳成功
         // 顯示備註信息
-        const displayNote = doorNumber ? 
-          `（門牌：${doorNumber}${transferNote ? `，備註：${transferNote}` : ''}）` : 
+        const displayNote = doorNumber ?
+          `（門牌：${doorNumber}${transferNote ? `，備註：${transferNote}` : ''}）` :
           (transferNote ? `（備註：${transferNote}）` : '');
-        
-        setSuccessMessage(`成功轉帳 ${transferAmount} 給帳號 ${transferAccount} ${displayNote}`);
+
+        const successMsg = `成功轉帳 ${transferAmount} 給帳號 ${transferAccount} ${displayNote}`;
+        setSuccessMessage(successMsg);
+        showAlertMessage(successMsg);
+        showAnimationEffect('transfer'); // 顯示轉帳動畫
         console.log(`送出的完整資訊: ${combinedNote}`);
+
+        // 獲取更新後的餘額
+        await fetchBalance(username);
 
         setTransferAmount(0);
         setTransferAccount('');
@@ -301,10 +397,11 @@ function App() {
         method: 'GET',
         credentials: 'include' // 重要：包含cookies以維持session
       });
-      
+
       // 無論伺服器回應如何，都清空本地狀態
       setIsLoggedIn(false);
       setUsername('');
+      setDisplayName('');
       setPassword('');
       setUserCaptcha('');
       setBalance(0);
@@ -318,12 +415,13 @@ function App() {
       setSuccessMessage('');
       setAvatar(null);
       generateCaptcha();
-      
+
       // 可選：顯示登出成功訊息
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
           console.log("成功登出系統");
+          showAlertMessage('已成功登出');
         }
       }
     } catch (error) {
@@ -343,9 +441,43 @@ function App() {
       <header className="App-header">
         <h1>OO錢包 App</h1>
 
+        {/* 操作成功提示彈窗 */}
+        {showAlert && (
+          <div className="alert-message">
+            {alertMessage}
+          </div>
+        )}
+
+        {/* 新增交易動畫效果 */}
+        {showAnimation && (
+          <div className={`transaction-animation ${animationType}`}>
+            {animationType === 'deposit' && (
+              <div className="money-animation money-in">
+                <span className="money-icon">💰</span>
+                <span className="money-icon">💵</span>
+                <span className="money-icon">💸</span>
+              </div>
+            )}
+            {animationType === 'withdraw' && (
+              <div className="money-animation money-out">
+                <span className="money-icon">💸</span>
+                <span className="money-icon">💵</span>
+                <span className="money-icon">💰</span>
+              </div>
+            )}
+            {animationType === 'transfer' && (
+              <div className="money-animation money-transfer">
+                <span className="money-icon">📤</span>
+                <span className="money-icon">💸</span>
+                <span className="money-icon">📥</span>
+              </div>
+            )}
+          </div>
+        )}
+
         {!isLoggedIn ? (
           // 登入頁面
-          <div className="login-container">
+          <div className="login-container" style={{ animation: 'none' }}>
             <h2>請登入</h2>
             {errorMessage && <p className="error-message">{errorMessage}</p>}
 
@@ -381,16 +513,16 @@ function App() {
             </div>
 
             <button onClick={handleLogin} className="login-button">登入</button>
-            
+
           </div>
         ) : (
           // 功能頁面
-          <div className="wallet-container">
+          <div className="wallet-container" style={{ animation: 'none' }}>
             <div className="user-info">
               <div className="avatar-container">
                 {avatar && <img src={avatar} alt="User Avatar" className="user-avatar" />}
               </div>
-              <h2>hello {username}，歡迎登入!</h2>
+              <h2>hello {displayName}，歡迎登入!</h2>
             </div>
 
             {errorMessage && <p className="error-message">{errorMessage}</p>}
@@ -398,6 +530,7 @@ function App() {
 
             <div className="balance-container">
               <h3>當前餘額: {balance}</h3>
+              <button onClick={() => fetchBalance(username)} className="refresh-button">重新整理餘額</button>
             </div>
 
             <div className="functions-container">
