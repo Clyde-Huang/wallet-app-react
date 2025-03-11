@@ -13,6 +13,7 @@ function App() {
   const [transferAmount, setTransferAmount] = useState(0);
   const [transferAccount, setTransferAccount] = useState('');
   const [transferNote, setTransferNote] = useState('');
+  const [doorNumber, setDoorNumber] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [isFirstLogin, setIsFirstLogin] = useState(false);
@@ -31,59 +32,106 @@ function App() {
   const fetchRandomAvatar = async () => {
     try {
       // 生成隨機 Pokemon ID (1-151 是第一代寶可夢)
-      const randomId = Math.floor(Math.random() * 151) + 1;
+      const randomId = Math.floor(Math.random() * 1025) + 1;
       const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${randomId}`);
       const data = await response.json();
       // 使用官方正面圖片
       setAvatar(data.sprites.front_default);
     } catch (error) {
-      console.error("Failed to fetch Pokemon avatar:", error);
+      console.error("無法獲取寶可夢頭像:", error);
       // 如果 API 請求失敗，使用預設頭像
       setAvatar("https://via.placeholder.com/96");
     }
   };
 
-  // 初始化頁面時生成驗證碼
+  // 檢查用戶登入狀態
+  const checkSession = async () => {
+    try {
+      const response = await fetch('http://localhost:8585/wallet/check-session', {
+        method: 'GET',
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        if (data.isLoggedIn) {
+          // 用戶已登入，設置相關狀態
+          setIsLoggedIn(true);
+          setUsername(data.identityNumber || '');
+          
+          // 獲取隨機頭像
+          fetchRandomAvatar();
+          
+          // 模擬從後端獲取餘額
+          setBalance(Math.floor(Math.random() * 90000) + 10000);
+        }
+      }
+    } catch (error) {
+      console.error("檢查登入狀態時發生錯誤:", error);
+    }
+  };
+
+  // 初始化頁面時生成驗證碼並檢查登入狀態
   useEffect(() => {
     generateCaptcha();
+    checkSession();
   }, []);
 
   // 處理登入
-  const handleLogin = () => {
+  const handleLogin = async () => {
     // 清除訊息
     setErrorMessage('');
     setSuccessMessage('');
 
-    // 驗證帳號密碼
-    if (username === '111' && password === '111') {
-      // 驗證碼檢查
-      if (userCaptcha === captcha) {
-        // 登入成功後獲取隨機頭像
+    // 先檢查驗證碼
+    if (userCaptcha !== captcha) {
+      setErrorMessage('驗證碼錯誤，請重新輸入');
+      generateCaptcha();
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:8585/wallet/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          identityNumber: username,
+          password: password
+        }),
+        credentials: 'include' // 重要：包含cookies以維持session
+      });
+
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        // 登入成功
         fetchRandomAvatar();
-
-        // 模擬檢查是否為首次登入 (實際應該從後端檢查)
+        
+        // 模擬從後端獲取餘額
+        const initialBalance = Math.floor(Math.random() * 90000) + 10000;
+        setBalance(initialBalance);
+        
+        // 模擬檢查是否為首次登入
         const simulateFirstLogin = Math.random() > 0.5;
-
         if (simulateFirstLogin) {
-          // 首次登入，隨機給錢
-          const initialBalance = Math.floor(Math.random() * 90000) + 10000;
-          setBalance(initialBalance);
           setIsFirstLogin(true);
           setSuccessMessage(`首次登入成功！已為您初始化餘額: ${initialBalance}`);
-          // 這裡應該調用API將初始餘額存入數據庫
         } else {
-          // 假設從後端拿到的餘額
-          setBalance(Math.floor(Math.random() * 90000) + 10000);
-          setSuccessMessage('登入成功！');
+          setSuccessMessage(data.message || '登入成功！');
         }
-
+        
         setIsLoggedIn(true);
       } else {
-        setErrorMessage('驗證碼錯誤，請重新輸入');
+        // 登入失敗
+        setErrorMessage(data.message || '帳號或密碼錯誤');
         generateCaptcha();
       }
-    } else {
-      setErrorMessage('帳號或密碼錯誤');
+    } catch (error) {
+      console.error("登入時發生錯誤:", error);
+      setErrorMessage('連接伺服器時發生錯誤，請稍後再試');
       generateCaptcha();
     }
   };
@@ -141,13 +189,29 @@ function App() {
     // 更新餘額
     setBalance(prevBalance => prevBalance - Number(transferAmount));
 
+    // 組合門牌和備註信息
+    let combinedNote = "";
+    if (doorNumber) {
+      combinedNote = `${transferAccount}#${doorNumber}`;
+      if (transferNote) {
+        combinedNote += `#${transferNote}`;
+      }
+    } else if (transferNote) {
+      combinedNote = transferNote;
+    }
+
     // 顯示備註信息
-    const noteInfo = transferNote ? `（備註：${transferNote}）` : '';
-    setSuccessMessage(`成功轉帳 ${transferAmount} 給帳號 ${transferAccount} ${noteInfo}`);
+    const displayNote = doorNumber ? 
+      `（門牌：${doorNumber}${transferNote ? `，備註：${transferNote}` : ''}）` : 
+      (transferNote ? `（備註：${transferNote}）` : '');
+    
+    setSuccessMessage(`成功轉帳 ${transferAmount} 給帳號 ${transferAccount} ${displayNote}`);
+    console.log(`送出的完整資訊: ${combinedNote}`);
 
     setTransferAmount(0);
     setTransferAccount('');
     setTransferNote('');
+    setDoorNumber('');
     // 這裡應該調用API將更新後的餘額存入數據庫，並處理轉帳邏輯
   };
 
@@ -157,21 +221,41 @@ function App() {
   };
 
   // 登出
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    setUsername('');
-    setPassword('');
-    setUserCaptcha('');
-    setBalance(0);
-    setDepositAmount(0);
-    setWithdrawAmount(0);
-    setTransferAmount(0);
-    setTransferAccount('');
-    setTransferNote('');
-    setErrorMessage('');
-    setSuccessMessage('');
-    setAvatar(null);
-    generateCaptcha();
+  const handleLogout = async () => {
+    try {
+      const response = await fetch('http://localhost:8585/wallet/logout', {
+        method: 'GET',
+        credentials: 'include' // 重要：包含cookies以維持session
+      });
+      
+      // 無論伺服器回應如何，都清空本地狀態
+      setIsLoggedIn(false);
+      setUsername('');
+      setPassword('');
+      setUserCaptcha('');
+      setBalance(0);
+      setDepositAmount(0);
+      setWithdrawAmount(0);
+      setTransferAmount(0);
+      setTransferAccount('');
+      setTransferNote('');
+      setDoorNumber('');
+      setErrorMessage('');
+      setSuccessMessage('');
+      setAvatar(null);
+      generateCaptcha();
+      
+      // 可選：顯示登出成功訊息
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          console.log("成功登出系統");
+        }
+      }
+    } catch (error) {
+      console.error("登出時發生錯誤:", error);
+      // 即使API調用失敗，仍然執行本地登出
+    }
   };
 
   // 清除訊息
@@ -223,7 +307,7 @@ function App() {
             </div>
 
             <button onClick={handleLogin} className="login-button">登入</button>
-            <p className="hint">提示: 帳號密碼皆為 111</p>
+            
           </div>
         ) : (
           // 功能頁面
@@ -232,7 +316,7 @@ function App() {
               <div className="avatar-container">
                 {avatar && <img src={avatar} alt="User Avatar" className="user-avatar" />}
               </div>
-              <h2>歡迎使用OO錢包</h2>
+              <h2>hello {username}，歡迎登入!</h2>
             </div>
 
             {errorMessage && <p className="error-message">{errorMessage}</p>}
@@ -292,6 +376,15 @@ function App() {
                     value={transferAmount}
                     onChange={(e) => { setTransferAmount(e.target.value); clearMessages(); }}
                     placeholder="請輸入金額"
+                  />
+                </div>
+                <div className="input-group">
+                  <label>門牌:</label>
+                  <input
+                    type="text"
+                    value={doorNumber}
+                    onChange={(e) => { setDoorNumber(e.target.value); clearMessages(); }}
+                    placeholder="請輸入門牌(選填)"
                   />
                 </div>
                 <div className="input-group">
