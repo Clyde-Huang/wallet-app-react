@@ -45,26 +45,26 @@ function App() {
     } catch (error) {
       console.error("無法獲取寶可夢頭像:", error);
       // 如果 API 請求失敗，使用預設頭像
-      setAvatar("https://via.placeholder.com/96");
+      setAvatar("https://embed.pixiv.net/spotlight.php?id=5760&lang=zh-tw");
     }
   };
 
-  // 顯示提示訊息
+  // 顯示提示訊息 - 延長顯示時間
   const showAlertMessage = (message) => {
     setAlertMessage(message);
     setShowAlert(true);
     setTimeout(() => {
       setShowAlert(false);
-    }, 3000);
+    }, 85000); //  毫秒延
   };
 
-  // 顯示動畫效果
+  // 顯示動畫效果 - 延長顯示時間
   const showAnimationEffect = (type) => {
     setAnimationType(type);
     setShowAnimation(true);
     setTimeout(() => {
       setShowAnimation(false);
-    }, 2000);
+    }, 84000); // 毫秒延
   };
 
   // 獲取用戶餘額 - 修正後的函數
@@ -328,27 +328,30 @@ function App() {
 
     try {
       // 組合門牌和備註信息
-      let combinedNote = "";
+      let remarkText = "";
       if (doorNumber) {
-        combinedNote = `${transferAccount}#${doorNumber}`;
+        remarkText = `#${doorNumber}#,`;
         if (transferNote) {
-          combinedNote += `#${transferNote}`;
+          remarkText += `^*${transferNote}-----`;
         }
       } else if (transferNote) {
-        combinedNote = transferNote;
+        remarkText = `#${transferNote}`;
       }
 
-      // 使用正確的轉帳 API
-      const response = await fetch('http://localhost:8585/wallet/transfer', {
+      // 完整的備註信息 (format: "帳號轉錢金額$給目標帳號")
+      const fullRemark = `${remarkText ? " " + remarkText : ""}${username}轉錢${transferAmount}$給${transferAccount}`;
+
+      // 使用新的轉帳 API
+      const response = await fetch('http://localhost:8585/money/moneytransfer', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          account: username,
-          transfer: Number(transferAmount), // 轉帳金額
-          targetAccount: transferAccount,
-          note: combinedNote
+          sendMoneyAccount: username,
+          receiveMoneyAccount: transferAccount,
+          receive: Number(transferAmount),
+          remark: fullRemark
         }),
         credentials: 'include' // 包含 cookies 以維持 session
       });
@@ -366,7 +369,7 @@ function App() {
         setSuccessMessage(successMsg);
         showAlertMessage(successMsg);
         showAnimationEffect('transfer'); // 顯示轉帳動畫
-        console.log(`送出的完整資訊: ${combinedNote}`);
+        console.log(`送出的完整資訊: ${fullRemark}`);
 
         // 獲取更新後的餘額
         await fetchBalance(username);
