@@ -330,7 +330,7 @@ function App() {
       // 組合門牌和備註信息
       let remarkText = "";
       if (doorNumber) {
-        remarkText = `#${doorNumber}#,`;
+        remarkText = `#${doorNumber}#-----`;
         if (transferNote) {
           remarkText += `^*${transferNote}-----`;
         }
