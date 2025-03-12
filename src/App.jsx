@@ -504,15 +504,19 @@ function App() {
               />
             </div>
 
+
             <div className="input-group">
-              <label>驗證碼: {captcha}</label>
-              <input
-                type="text"
-                value={userCaptcha}
-                onChange={(e) => { setUserCaptcha(e.target.value); clearMessages(); }}
-                placeholder="請輸入驗證碼"
-              />
-              <button onClick={generateCaptcha} className="captcha-button">重新產生</button>
+              <label className="captcha-label">驗證碼: {captcha}</label>
+              <div className="captcha-container">
+                <button onClick={generateCaptcha} className="captcha-button">重新產生</button>
+                <input
+                  type="text"
+                  value={userCaptcha}
+                  onChange={(e) => { setUserCaptcha(e.target.value); clearMessages(); }}
+                  placeholder="請輸入驗證碼"
+                  className="captcha-input"
+                />
+              </div>
             </div>
 
             <button onClick={handleLogin} className="login-button">登入</button>

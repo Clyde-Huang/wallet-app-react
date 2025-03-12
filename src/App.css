@@ -693,3 +693,76 @@ button:active {
     box-shadow: 0 4px 0 #c73e3e, 0 0 20px rgba(255, 82, 82, 0.8);
   }
 }
+
+.captcha-container {
+  display: flex;
+  align-items: stretch;
+  /* 改為 stretch 使子元素高度一致 */
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.captcha-button {
+  margin-top: 0;
+  margin-right: 10px;
+  width: 30%;
+  /* 按鈕佔整個容器的30% */
+  background-color: #8fd14f;
+  box-shadow: 0 4px 0 #6ca832;
+  color: white;
+  padding: 0;
+  /* 移除預設的 padding */
+  border-radius: 12px;
+  font-size: 16px;
+  height: auto;
+  /* 讓高度自動適應 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.captcha-input {
+  width: 70%;
+  /* 輸入框佔整個容器的70% */
+  padding: 15px;
+  border: 3px solid #4a86e8;
+  border-radius: 12px;
+  background-color: #fff;
+  color: #2b579a;
+  font-size: 18px;
+  box-sizing: border-box;
+  font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+  transition: border-color 0.3s ease;
+  height: auto;
+  /* 讓高度自動適應 */
+  margin: 0;
+  /* 移除預設的 margin */
+}
+
+.captcha-input:focus {
+  outline: none;
+  border-color: #ffde59;
+  box-shadow: 0 0 10px rgba(74, 134, 232, 0.5);
+}
+
+/* 驗證碼標籤樣式 */
+.captcha-label {
+  display: block;
+  margin-bottom: 12px;
+  color: #2b579a;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+/* 移除 button 的預設樣式 */
+/* .captcha-button:hover {
+  background-color: #6ca832;
+  box-shadow: 0 6px 0 #528020;
+  transform: translateY(-2px);
+}
+
+.captcha-button:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #528020;
+} */
