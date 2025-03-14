@@ -332,10 +332,10 @@ function App() {
       if (doorNumber) {
         remarkText = `#${doorNumber}#-----`;
         if (transferNote) {
-          remarkText += `^*${transferNote}-----`;
+          remarkText += `^${transferNote}-----`;
         }
       } else if (transferNote) {
-        remarkText = `#${transferNote}`;
+        remarkText = `^${transferNote}-----`;
       }
 
       // 完整的備註信息 (format: "帳號轉錢金額$給目標帳號")
@@ -610,8 +610,8 @@ function App() {
                     placeholder="請輸入備註(選填)"
                   />
                   <div className="note-buttons">
-                    <button type="button" onClick={() => handleSelectNote('車位費')} className="note-button">車位費</button>
-                    <button type="button" onClick={() => handleSelectNote('管理費')} className="note-button">管理費</button>
+                    <button type="button" onClick={() => handleSelectNote('車位費^,')} className="note-button">車位費</button>
+                    <button type="button" onClick={() => handleSelectNote('管理費^,')} className="note-button">管理費</button>
                   </div>
                 </div>
                 <button onClick={handleTransfer} className="function-button">匯款</button>
