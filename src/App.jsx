@@ -529,7 +529,8 @@ function App() {
               <div className="avatar-container">
                 {avatar && <img src={avatar} alt="User Avatar" className="user-avatar" />}
               </div>
-              <h2>hello {displayName}，歡迎登入!</h2>
+              <h2>Hello {displayName}，歡迎登入!</h2>
+              <h2>帳號：{username}</h2>
             </div>
 
             {errorMessage && <p className="error-message">{errorMessage}</p>}
@@ -541,35 +542,6 @@ function App() {
             </div>
 
             <div className="functions-container">
-              {/* 存款區塊 */}
-              <div className="function-block">
-                <h3>存款</h3>
-                <div className="input-group">
-                  <label>金額:</label>
-                  <input
-                    type="number"
-                    value={depositAmount}
-                    onChange={(e) => { setDepositAmount(e.target.value); clearMessages(); }}
-                    placeholder="請輸入金額"
-                  />
-                </div>
-                <button onClick={handleDeposit} className="function-button">存款</button>
-              </div>
-
-              {/* 提款區塊 */}
-              <div className="function-block">
-                <h3>提款</h3>
-                <div className="input-group">
-                  <label>金額:</label>
-                  <input
-                    type="number"
-                    value={withdrawAmount}
-                    onChange={(e) => { setWithdrawAmount(e.target.value); clearMessages(); }}
-                    placeholder="請輸入金額"
-                  />
-                </div>
-                <button onClick={handleWithdraw} className="function-button">提款</button>
-              </div>
 
               {/* 匯款區塊 */}
               <div className="function-block">
@@ -617,10 +589,67 @@ function App() {
                 <button onClick={handleTransfer} className="function-button">匯款</button>
                 <p className="hint">管理員帳號: 102420484096</p>
               </div>
+
+              {/* 存款區塊 */}
+              <div className="function-block">
+                <h3>存款</h3>
+                <div className="input-group">
+                  <label>金額:</label>
+                  <input
+                    type="number"
+                    value={depositAmount}
+                    onChange={(e) => { setDepositAmount(e.target.value); clearMessages(); }}
+                    placeholder="請輸入金額"
+                  />
+                </div>
+                <button onClick={handleDeposit} className="function-button">存款</button>
+              </div>
+
+              {/* 提款區塊 */}
+              <div className="function-block">
+                <h3>提款</h3>
+                <div className="input-group">
+                  <label>金額:</label>
+                  <input
+                    type="number"
+                    value={withdrawAmount}
+                    onChange={(e) => { setWithdrawAmount(e.target.value); clearMessages(); }}
+                    placeholder="請輸入金額"
+                  />
+                </div>
+                <button onClick={handleWithdraw} className="function-button">提款</button>
+              </div>
+
+
             </div>
 
-            <button onClick={handleLogout} className="logout-button">登出</button>
-          </div>
+            <button
+              onClick={() => {
+                // 使用更明確的提示文字
+                if (window.confirm('您確定要登出嗎？所有未保存的資料將會遺失。')) {
+                  // 可以在這裡添加額外的登出前確認步驟
+                  handleLogout();
+
+                  // 或者添加登出成功的提示
+                  showAlertMessage('已成功登出系統');
+                }
+              }}
+              className="logout-button"
+              style={{
+                fontSize: '0.8rem',
+                padding: '5px 10px',
+                position: 'absolute',
+                right: '15px',
+                top: '15px',
+                width: 'auto',
+                margin: '0',
+                opacity: '0.8',
+                backgroundColor: '#888888',
+                boxShadow: '0 2px 0 #666666'
+              }}
+            >
+              登出
+            </button>          </div>
         )}
       </header>
     </div>
