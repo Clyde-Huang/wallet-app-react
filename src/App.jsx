@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
+import TransactionHistory from './TransactionHistory.jsx'; // 新增交易記錄
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -23,6 +24,7 @@ function App() {
   const [alertMessage, setAlertMessage] = useState('');
   const [showAnimation, setShowAnimation] = useState(false); // 新增動畫狀態
   const [animationType, setAnimationType] = useState(''); // 新增動畫類型
+  const [showTransactionHistory, setShowTransactionHistory] = useState(false); // 新增交易記錄狀態
 
   // 生成驗證碼
   const generateCaptcha = () => {
@@ -55,7 +57,7 @@ function App() {
     setShowAlert(true);
     setTimeout(() => {
       setShowAlert(false);
-    }, 85000); //  毫秒延
+    }, 85000); // 85 秒延遲
   };
 
   // 顯示動畫效果 - 延長顯示時間
@@ -64,7 +66,7 @@ function App() {
     setShowAnimation(true);
     setTimeout(() => {
       setShowAnimation(false);
-    }, 84000); // 毫秒延
+    }, 84000); // 84 秒延遲
   };
 
   // 獲取用戶餘額 - 修正後的函數
@@ -504,7 +506,6 @@ function App() {
               />
             </div>
 
-
             <div className="input-group">
               <label className="captcha-label">驗證碼: {captcha}</label>
               <div className="captcha-container">
@@ -520,7 +521,6 @@ function App() {
             </div>
 
             <button onClick={handleLogin} className="login-button">登入</button>
-
           </div>
         ) : (
           // 功能頁面
@@ -539,10 +539,20 @@ function App() {
             <div className="balance-container">
               <h3>當前餘額: {balance}</h3>
               <button onClick={() => fetchBalance(username)} className="refresh-button">重新整理餘額</button>
+              <button onClick={() => setShowTransactionHistory(true)} className="refresh-button" style={{ marginLeft: '10px' }}>
+                查看交易記錄
+              </button>
             </div>
 
-            <div className="functions-container">
+            {/* 顯示交易記錄組件 */}
+            {isLoggedIn && showTransactionHistory && (
+              <TransactionHistory
+                account={username}
+                onClose={() => setShowTransactionHistory(false)}
+              />
+            )}
 
+            <div className="functions-container">
               {/* 匯款區塊 */}
               <div className="function-block">
                 <h3>匯款</h3>
@@ -619,8 +629,6 @@ function App() {
                 </div>
                 <button onClick={handleWithdraw} className="function-button">提款</button>
               </div>
-
-
             </div>
 
             <button
@@ -649,7 +657,8 @@ function App() {
               }}
             >
               登出
-            </button>          </div>
+            </button>
+          </div>
         )}
       </header>
     </div>
